@@ -137,9 +137,9 @@ image::sequencediagram.pdf[Sequencediagram,890, width=80%]
 	- For running BVS
 	-/ns3 run start-bvs
 
-	-The code can be accessed in explorer button and navigate to the main file in /home/jorge/ns-allinone-3.36.1/ns-3.36.1/src/blood-voyager-s/examples/start-blood-voyager-s.cc
+	- The code can be accessed in explorer button and navigate to the main file in /home/jorge/ns-allinone-3.36.1/ns-3.36.1/src/blood-voyager-s/examples/start-blood-voyager-s.cc
 
-	-Always Open Visual studio from the WSL terminal with the running (code .)
+	- Always Open Visual studio from the WSL terminal with the running (code .)
 
 === You’ve already installed ns-3.40
 
