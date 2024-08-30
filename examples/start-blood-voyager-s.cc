@@ -34,7 +34,7 @@ main (int argc, char *argv[])
   bool typeofsimulation = 0; // 0 is for single run, 1 is for sweep over tissue thickness
   int gatewayposition = 1;
   int tissue_ID_init = 94;
-  float vesselthickness = 0.00036; // for single run, tissue thickness in [m]
+  float vesselthickness = 0.00016; // for single run, tissue thickness in [m]
   vector<int> gatewayPositions;
   vector<int> tissue_ID;
 
@@ -61,7 +61,7 @@ main (int argc, char *argv[])
 
   remove("gateway.csv");
   remove("gateway_amplitudes.csv");
-  if (!typeofsimulation)
+  if (typeofsimulation)
     remove("gateway_ber.csv");
 
  
@@ -71,10 +71,10 @@ main (int argc, char *argv[])
   {
     vector<float> vesselStep(ITERATIONS,0);
 
-    float startval = 200*pow(10,-6);
+    float startval = 1*pow(10,-6);
     
     vesselStep[0] = startval;
-    vesselStep[ITERATIONS-1] = 1800*pow(10,-6);
+    vesselStep[ITERATIONS-1] = 400*pow(10,-6);
 
     float a = (vesselStep[ITERATIONS-1] - vesselStep[0]) / ITERATIONS;
 
