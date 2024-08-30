@@ -82,62 +82,60 @@ image::sequencediagram.pdf[Sequencediagram,890, width=80%]
 
 === Detailed setup description:
 
-	install visual studio code
-	install Ubuntu 22.04.3 LTS
-	(optional) open Turn Windows features on or off, checkmark windows subsystems for linux, restart the PC
-	(optional) update the kernel component at https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi
-	(optional) open Turn Windows features on or off, and activate Virtual Machine Platform Windows
+	- install visual studio code
+	- install Ubuntu 22.04.3 LTS
+	- (optional) open Turn Windows features on or off, checkmark windows subsystems for linux, restart the PC
+	- (optional) update the kernel component at https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi
+	- (optional) open Turn Windows features on or off, and activate Virtual Machine Platform Windows
 
-	Open Ubuntu 22.04.3 LTS and create and UNIX user in the prompt
-	in the WSL terminal run the code
+	- Open Ubuntu 22.04.3 LTS and create and UNIX user in the prompt
+	- in the WSL terminal run the code
 
-	install ns-3 with the commands following: (https://www.nsnam.com/2022/06/ns3-installation-in-ubuntu-2204.html, 4.3. Downloading ns-3 using Git in https://www.nsnam.org/docs/tutorial/html/getting-started.html#downloading-ns-3-using-git)
+	- install ns-3 with the commands following: (https://www.nsnam.com/2022/06/ns3-installation-in-ubuntu-2204.html, 4.3. Downloading ns-3 using Git in https://www.nsnam.org/docs/tutorial/html/getting-started.html#downloading-ns-3-using-git)
 
-	sudo apt update
+	- sudo apt update
+	- sudo apt upgrade
 
-	sudo apt upgrade
+	- sudo apt install g++ python3 python3-dev pkg-config sqlite3 cmake python3-setuptools git qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gir1.2-goocanvas-2.0 python3-gi python3-gi-cairo python3-pygraphviz gir1.2-gtk-3.0 ipython3 openmpi-bin openmpi-common openmpi-doc libopenmpi-dev autoconf cvs bzr unrar gsl-bin libgsl-dev libgslcblas0 tcpdump sqlite sqlite3 libsqlite3-dev  libxml2 libxml2-dev libc6-dev libc6-dev-i386 libclang-dev llvm-dev automake python3-pip libxml2 libxml2-dev libboost-all-dev
 
-	sudo apt install g++ python3 python3-dev pkg-config sqlite3 cmake python3-setuptools git qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gir1.2-goocanvas-2.0 python3-gi python3-gi-cairo python3-pygraphviz gir1.2-gtk-3.0 ipython3 openmpi-bin openmpi-common openmpi-doc libopenmpi-dev autoconf cvs bzr unrar gsl-bin libgsl-dev libgslcblas0 wireshark tcpdump sqlite sqlite3 libsqlite3-dev  libxml2 libxml2-dev libc6-dev libc6-dev-i386 libclang-dev llvm-dev automake python3-pip libxml2 libxml2-dev libboost-all-dev
+	- wget https://www.nsnam.org/releases/ns-allinone-3.36.1.tar.bz2
 
-	wget https://www.nsnam.org/releases/ns-allinone-3.36.1.tar.bz2
+	- tar jxvf ns-allinone-3.36.1.tar.bz2
 
-	tar jxvf ns-allinone-3.36.1.tar.bz2
+	- cd ns-allinone-3.36.1/
 
-	cd ns-allinone-3.36.1/
+	- ./build.py --enable-examples --enable-tests
 
-	./build.py --enable-examples --enable-tests
+	- cd ns-3.36.1/
 
-	cd ns-3.36.1/
+	- ./ns3 run hello-simulator
 
-	./ns3 run hello-simulator
+	- Copy the BVS+Comm project and extract in \wsl.localhost\Ubuntu-22.04\home\jorge\ns-allinone-3.36.1\ns-3.36.1\src
 
-	Copy the BVS+Comm project and extract in \wsl.localhost\Ubuntu-22.04\home\jorge\ns-allinone-3.36.1\ns-3.36.1\src
+	- Rename the folder with blood-voyager-s
 
-	Rename the folder with blood-voyager-s
+	- Copy the "vasculature.csv" to \wsl.localhost\Ubuntu-22.04\home\jorge\ns-allinone-3.36.1\ns-3.36.1
+	-- The csv file is accesible in https://github.com/RegineWendt/blood-voyager-s/tree/master
 
-	Copy the "vasculature.csv" to \wsl.localhost\Ubuntu-22.04\home\jorge\ns-allinone-3.36.1\ns-3.36.1
-	The csv file is accesible in https://github.com/RegineWendt/blood-voyager-s/tree/master
+	- for linking to Visual Studio run the command (code .) in the WSL terminal
 
-	for linking to Visual Studio run the command (code .) in the WSL terminal
+	- When Visual Studio Opens, just install the add-on (WSL) that appears in the bottom corner window
+	- In Visual Studio go to extentions (icon in the bar at left bar) and install C/C++
 
-	When Visual Studio Opens, just install the add-on (WSL) that appears in the bottom corner window
-	In Visual Studio go to extentions (icon in the bar at left bar) and install C/C++
+	- WSL installed a Linux partition in the PC
 
-	WSL installed a Linux partition in the PC
+	- Open the terminal in Visual Studio in the tab View/Terminal
+	- In the Visual studio terminal run the code
 
-	Open the terminal in Visual Studio in the tab View/Terminal
-	In the Visual studio terminal run the code
+	- ./ns3 clean
+	- ./ns3 configure --enable-examples --enable-tests
+	- ./ns3 build start-bvs
 
-	./ns3 clean
-	./ns3 configure --enable-examples --enable-tests
-	./ns3 configure start-bvs --enable-examples --enable-tests
-	./ns3 build start-bvs
-
-	whenever you update the code you run the code
-	./ns3 build start-bvs
+	- whenever you update the code you run the code
+	- ./ns3 build start-bvs
 
 	For running BVS
-	./ns3 run start-bvs
+	- ./ns3 run start-bvs
 
 	The code can be accessed in explorer button and navigate to the main file in /home/jorge/ns-allinone-3.36.1/ns-3.36.1/src/blood-voyager-s/examples/start-blood-voyager-s.cc
 
@@ -152,9 +150,7 @@ Take the blood-voyager-s version for ns-3.40 and copy the bvs folder in the !!!s
 You need to download the complete ns-3.40(or newer) and follow the instructions in this  https://www.nsnam.org/docs/tutorial/html/getting-started.html[ns-3 tutorial]. Then you download the blood-voyager-s folder from here and put it in the src folder. In addition, you need to put the vasculature.csv in your ns-3.x folder. For further instructions see "Run BVS".
 
 
-
-
-== Run BVS Version ns-3.40 or newer
+== Run BVS:
     SIMDURATION=   # simulation duration in seconds (default 500)
     NUMOFNANOBOTS= # number of nanobots (default 100)
     INJECTVESSEL=  # injection vessel [1-94] (default 29)
