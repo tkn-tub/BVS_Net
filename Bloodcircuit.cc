@@ -26,7 +26,7 @@
 
 namespace ns3 {
 
-Bloodcircuit::Bloodcircuit (unsigned int numberOfNanobots, unsigned int injectionVessel, Ptr<PrintNanobots> printer, std::vector<int> gatewayPositions, std::vector<int> tissue_ID, float vesselthickness)
+Bloodcircuit::Bloodcircuit (unsigned int numberOfNanobots, unsigned int injectionVessel, Ptr<Orchestrator> printer, std::vector<int> gatewayPositions, std::vector<int> tissue_ID, float vesselthickness)
 {
   // initialise map with bloodvesselinformation
   m_bloodvessels = map<int, Ptr<Bloodvessel>> ();
@@ -97,7 +97,7 @@ Bloodcircuit::BeginnSimulation (unsigned int simulationDuration, unsigned int nu
   //execution time
   clock_t start, finish;
   start = clock ();
-  Ptr<PrintNanobots> printNano = new PrintNanobots ();
+  Ptr<Orchestrator> printNano = new Orchestrator ();
 
 
   //Create the bloodcircuit
@@ -209,7 +209,7 @@ Bloodcircuit::InjectNanobots (int numberOfNanobots, Ptr<Bloodvessel> bloodvessel
     }
   //Print Nanobots in csv-file.
 
-  bloodvessel->PrintNanobotsOfVessel ();
+  bloodvessel->OrchestratorOfVessel ();
 }
 
 double

@@ -5,7 +5,7 @@ build_lib(
     Bloodstream.cc
     Nanobot.cc
     Bloodcircuit.cc
-    PrintNanobots.cc
+    Orchestrator.cc
     BVSChannel.cc
     NanoNetDevice.cc
     GatewayNetDevice.cc
@@ -17,7 +17,7 @@ build_lib(
     Bloodstream.h
     Nanobot.h
     Bloodcircuit.h
-    PrintNanobots.h
+    Orchestrator.h
     BVSChannel.h
     NanoNetDevice.h
     GatewayNetDevice.h

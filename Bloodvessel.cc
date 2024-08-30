@@ -54,7 +54,7 @@ Bloodvessel::~Bloodvessel ()
 }
 
 void
-Bloodvessel::SetPrinter (Ptr<PrintNanobots> printer)
+Bloodvessel::SetPrinter (Ptr<Orchestrator> printer)
 {
   this->printer = printer;
 }
@@ -221,7 +221,7 @@ Bloodvessel::TranslatePosition (double dt)
               else
                 {
                   print.push_back (nb);
-                  //PrintNanobot (nb, this);
+                  //Call (nb, this);
                 }
             } //if timestep not from old
         } //inner for
@@ -388,13 +388,13 @@ Bloodvessel::TransposeNanobots (list<Ptr<Nanobot>> reachedEnd, int stream)
 
 //HELPER
 void
-Bloodvessel::PrintNanobotsOfVessel ()
+Bloodvessel::OrchestratorOfVessel ()
 {
   for (uint j = 0; j < m_bloodstreams.size (); j++)
     {
       for (uint i = 0; i < m_bloodstreams[j]->CountNanbots (); i++)
         {
-          printer->PrintNanobot (m_bloodstreams[j]->GetNanobot (i), GetbloodvesselID ());
+          printer->Call (m_bloodstreams[j]->GetNanobot (i), GetbloodvesselID ());
         }
     }
 }

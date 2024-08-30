@@ -39,7 +39,7 @@ private:
   // A map of m_bloodvesselId to Bloodvessel.
   map<int, ns3::Ptr<ns3::Bloodvessel>> m_bloodvessels;
 
-  Ptr<PrintNanobots> printer;
+  Ptr<Orchestrator> printer;
 
   // add a new vessel Object to the bloodcircouit
   void AddVesselData (int id, BloodvesselType type, Vector start, Vector stop);
@@ -75,7 +75,7 @@ private:
 
 public:
   /// The constructor setting up the Bloodcircuit.
-  Bloodcircuit (unsigned int numberOfNanobots, unsigned int injectionVessel, Ptr<PrintNanobots> printer, std::vector<int> gatewayPositions, std::vector<int> tissue_ID, float vesselthickness);
+  Bloodcircuit (unsigned int numberOfNanobots, unsigned int injectionVessel, Ptr<Orchestrator> printer, std::vector<int> gatewayPositions, std::vector<int> tissue_ID, float vesselthickness);
 
   /// Destructor to clean up the map.
   ~Bloodcircuit ();

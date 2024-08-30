@@ -36,11 +36,11 @@
 // parameter for channel model (terrahertz)
 #define TESTPACKETSIZE 200
 #define FREQ_THZ 0.5*pow(10,12)
-#define DIST_INIT 850*pow(10,-6)
+#define DIST_INIT 500*pow(10,-6)
 #define SKIN_THICKNESS 76*pow(10,-6)
 #define VESSEL_THICKNESS 200*pow(10,-6)
 #define TISSUETHICKNESS 1*pow(10,-3)
-#define POWER 4*pow(10,3)
+#define POWER 1*pow(10,-3)
 
 
 using namespace std;

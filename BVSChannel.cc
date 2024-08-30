@@ -20,6 +20,8 @@
 #include "BVSChannel.h"
 #include "NanoNetDevice.h"
 #include "GatewayNetDevice.h"
+#include <cstdlib>
+#include <ctime>
 
 namespace ns3{
 
@@ -104,20 +106,20 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
 
 	// length of channel, 100 samples, memory, MULITPLICATION for now -> no memory
 	double comm_dist = sqrt(pow(DIST_INIT,2) + pow(SKIN_THICKNESS + TISSUETHICKNESS + m_vesselthickness,2));
-	//cout << "pathloss" << convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUE_THICKNESS, VESSEL_THICKNESS)) << "\n";
+	//cout << "pathloss" << convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUETHICKNESS, m_vesselthickness)) << "\n";
 
 	double pathl{convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUETHICKNESS, m_vesselthickness))};
 
 	transform((*mac_phy_data).SEQ_RX.begin(),(*mac_phy_data).SEQ_RX.end(),
-			  (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*pathl;});
+			  (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*sqrt(pathl);});
 
 	
 	vector<double> noise = createNoiseSequence();
 
 	  //uncomment for terminal output
    
-/*
-	cout << "noise : | ";
+
+/*	cout << "noise : | ";
         for(int i = 0; i < TESTPACKETSIZE; i++ )
         {
             cout << noise[i] << " | ";
@@ -130,7 +132,7 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
         for(int i = 0; i < TESTPACKETSIZE; i++ )
         {
 			(*mac_phy_data).SEQ_RX[i] =  (*mac_phy_data).SEQ_RX[i] + noise[i];
-//            cout << (*mac_phy_data).SEQ_RX[i] << " | ";
+         //  cout << (*mac_phy_data).SEQ_RX[i] << " | ";
         }
 //    cout << "\n";
 
@@ -151,7 +153,10 @@ vector<double> BVSChannel::createNoiseSequence()
 	double Tmol = t0 * (1- exp((-4*M_PI*FREQ_THZ*(SKIN_THICKNESS+TISSUETHICKNESS+m_vesselthickness)*k)/c));  
 
 	double variance = kB*Tmol;
-	normal_distribution d{0.0, variance};
+	double stddev = sqrt(variance);
+
+	//cout << variance << '\n';
+	normal_distribution d{0.0, stddev};
 	
 
 	vector<double> ret_val(TESTPACKETSIZE,0);
@@ -165,7 +170,29 @@ vector<double> BVSChannel::createNoiseSequence()
 	
 	return ret_val;
 
+	
+   /*
+	// Seed the random number generator
+    std::srand(42); // Using a fixed seed value
 
+	// Vector to store the output
+    std::vector<double> ret_val(TESTPACKETSIZE);
+
+    // Generate white Gaussian noise using Box-Muller Transform
+    for (int j = 0; j < TESTPACKETSIZE; ++j) {
+        double u1, u2, s;
+
+        // Generate two uniform random numbers in (0, 1)
+        u1 = (std::rand() + 1.0) / (RAND_MAX + 1.0); // +1 to avoid 0
+        u2 = (std::rand() + 1.0) / (RAND_MAX + 1.0); // +1 to avoid 0
+
+        // Box-Muller transform
+        double z0 = sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2); // Standard normal variable
+        ret_val[j] = z0 * stddev; // Scale by the standard deviation
+    }
+	return ret_val;
+
+	*/
 }
 
 

@@ -20,7 +20,7 @@
 #ifndef CLASS_BLOODVESSEL_
 #define CLASS_BLOODVESSEL_
 
-#include "PrintNanobots.h"
+#include "Orchestrator.h"
 #include "Bloodstream.h"
 
 using namespace std;
@@ -48,7 +48,7 @@ private:
   Vector m_stopPositionBloodvessel; // end-coordinates of the bloodvessel
   double m_deltaT; // the mobility step interval (duration between each step).
   double m_vesselWidth; // the width of each stream in the bloodvessel.
-  Ptr<PrintNanobots> printer;
+  Ptr<Orchestrator> printer;
 
   /// Connections
   Ptr<Bloodvessel> m_nextBloodvessel1;
@@ -155,7 +155,7 @@ public:
   static void Step (Ptr<Bloodvessel> bloodvessel);
 
   /// Prints all nanobots in the Bloodvessel to a csv file.
-  void PrintNanobotsOfVessel ();
+  void OrchestratorOfVessel ();
 
   /**
   * \param value the traffic velocity m/s at entrance.
@@ -241,7 +241,7 @@ public:
   */
   void SetNextBloodvessel2 (Ptr<Bloodvessel> value);
 
-  void SetPrinter (Ptr<PrintNanobots> printer);
+  void SetPrinter (Ptr<Orchestrator> printer);
 };
 }; // namespace ns3
 #endif
