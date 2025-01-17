@@ -41,9 +41,21 @@ namespace ns3 {
 
         m_node = nullptr;
 
-        vector<int> zero_bits(TESTPACKETSIZE, 0);
+        //vector<int> zero_bits(TESTPACKETSIZE, 0);
 
-        vector<double> zero_samples(TESTPACKETSIZE, 0);
+        vector<vector<double>> SEQ_RX;
+
+        vector<bitset<32>> PDU_TX;
+
+        vector<bitset<48>> PDU_TX2;
+
+        vector<vector<int>> SEQ_TX;
+
+        //vector<vector<int>> zero_samples_decoding;
+
+        //vector<bitset<48>> PDU_RX2;
+
+        vector<bitset<32>> PDU_RX;
 
         m_mac_phy_data = new MAC_PHY_DATA;
 
@@ -51,13 +63,17 @@ namespace ns3 {
 
         (*m_mac_phy_data).tissue_ID = 0;
 
-        (*m_mac_phy_data).PDU_RX = zero_bits;
+        /*(*m_mac_phy_data).PDU_TX = zero_bits;
 
-        (*m_mac_phy_data).PDU_TX = zero_bits;
+        (*m_mac_phy_data).PDU_TX2 = zero_bits_fec_encoding;
+
+        (*m_mac_phy_data).SEQ_TX = zero_samples_encoding;
 
         (*m_mac_phy_data).SEQ_RX = zero_samples;
 
-        (*m_mac_phy_data).SEQ_TX = zero_samples;
+        (*m_mac_phy_data).PDU_RX2 = zero_bits_decoding;
+
+        (*m_mac_phy_data).PDU_RX = zero_bits_fec_decoding;*/
     
     }
 
@@ -124,14 +140,44 @@ namespace ns3 {
     void NanoNetDevice::createMacPhyData(int tissue_ID, int nanobot_ID){
 
         //create random bits and samples and apply FEC encoder
-        bitset<32> random_bits;
-        bitset<32> data = random_bits;
+        //vector<int> random_bits(TESTPACKETSIZE, 0);
+        //bitset<32> random_bits;
+        //bitset<32> data = random_bits;
+        //random_device rd;
+        //mt19937 gen(rd());
+        //uniform_int_distribution<uint32_t> dis(0, 0xFFFFFFFF);
+        //bitset<32> random_bits(dis(gen));
+        //vector<bitset<32>> randompackets(200, random_bits); //generate 200 random packets which consist of 32bits packet
 
-        bitset<32> random_samples;
-        bitset<32> sample = random_samples;
+        //vector<double> random_samples(TESTPACKETSIZE,0);
+        //bitset<32> random_samples;
+        //bitset<32> sample = random_samples;
 
-        vector<bitset<12>> encodedData = encode32Bits(data);
-        vector<bitset<12>> encodedSample = encode32Bits(sample);
+        //vector<bitset<48>> encodedPackets = encodePackets(randompackets);
+        //bitset<48> encodedData = encode(data);
+        //bitset<48> encodedSample = encode(sample);
+
+
+        //(*m_mac_phy_data).PDU_TX = random_bits; //32bits
+
+        vector<bitset<32>> random_bits(TESTPACKETSIZE);
+        for (int i = 0; i < TESTPACKETSIZE; ++i) {
+            for(int j = 0; j < 32; ++j) {
+                random_bits[i][j] = rand() % 2;
+            }
+            //m_mac_phy_data->PDU_TX.push_back(bitset<32>(dis(gen)));
+        }
+        (*m_mac_phy_data).PDU_TX = random_bits; // PDU_TX is a storage for random 32 bits with 200 packet test size
+
+        //(*m_mac_phy_data).PDU_TX2 = encodedData; //48bits
+        vector<bitset<48>> encodedPDU_TX;
+        encodedPDU_TX.reserve(TESTPACKETSIZE);
+        for (int i = 0; i < TESTPACKETSIZE; ++i) {
+            bitset<48> encodedData = encode(m_mac_phy_data->PDU_TX[i]);
+            encodedPDU_TX.push_back(encodedData);
+            //m_mac_phy_data->PDU_TX2.push_back(encodedData);
+        }
+        (*m_mac_phy_data).PDU_TX2 = encodedPDU_TX; // PDU_TX2 is a storage for the fec encoded data
 
         //output encoded data
         /*cout << "Original 32-bit data: " << data << endl;
@@ -141,7 +187,7 @@ namespace ns3 {
         }
         cout << endl;*/
 
-        //apply OOK modulation scheme
+        /*apply OOK modulation scheme
         for(int i = 0; i < TESTPACKETSIZE; i++ )
         {
             encodedData[i] = rand()%2;
@@ -150,7 +196,24 @@ namespace ns3 {
                 encodedData[i] = 1;
             else
                 encodedData[i] = -1;
+        }*/
+        
+        //OOK Modulation scheme
+        for (int i = 0; i < TESTPACKETSIZE; ++i) {
+            const bitset<48>& encodedPacket = m_mac_phy_data->PDU_TX2[i];
+            vector<int> modulatedPacket(48);
+            for (int j = 0; j < 48; ++j) {
+                if (encodedPacket[j] == 1) {
+                    modulatedPacket[j] = 1;
+                } else {
+                    modulatedPacket[j] = -1;
+                }
+            }
+            (*m_mac_phy_data).SEQ_TX[i] = modulatedPacket;
+            //m_mac_phy_data->SEQ_TX.push_back(modulatedPacket);
         }
+
+        //(*m_mac_phy_data).SEQ_TX = modulatedSignal; //48bits
 
         //vector<int> random_bits(TESTPACKETSIZE, 0);
         //vector<double> random_samples(TESTPACKETSIZE, 0);
@@ -166,14 +229,6 @@ namespace ns3 {
                 random_samples[i] = -1;
         }*/
 
-        //(*m_mac_phy_data).PDU_TX = random_bits;
-
-        (*m_mac_phy_data).PDU_TX = encodedData;
-
-        //(*m_mac_phy_data).SEQ_TX = random_samples;
-        
-        (*m_mac_phy_data).SEQ_TX = encodedSample;
-
         (*m_mac_phy_data).nanobot_ID = nanobot_ID;
 
         (*m_mac_phy_data).tissue_ID = tissue_ID;
@@ -188,7 +243,17 @@ namespace ns3 {
         return m_mac_phy_data;
     }
 
-    bitset<12> NanoNetDevice::encode(const bitset<8>& data) {
+    /*vector<bitset<48>> NanoNetDevice::encodePackets(const vector<bitset<32>>& packets) {
+        vector<bitset<48>> encodedPackets;
+
+        for (const auto& packet : packets) {
+            //encode each 32bits packet into 48bits
+            encodedPackets.push_back(encode(packet));
+        }
+        return encodedPackets;
+    }*/
+
+    bitset<12> NanoNetDevice::encodeBlock(const bitset<8>& data) {
         bitset<12> encodedData;
 
         //data bits = 2,4,5,6,8,9,10,11
@@ -210,17 +275,32 @@ namespace ns3 {
         return encodedData;
     }
 
-    vector<bitset<12>> NanoNetDevice::encode32Bits(const bitset<32>& data) {
-        vector<bitset<12>> encodedData;
+    bitset<48> NanoNetDevice::encode(const bitset<32>& data) {
+        bitset<48> encodedData;
 
-        for(int i = 0; i < TESTPACKETSIZE; i += 8) {
+        /*for(int i = 0; i < TESTPACKETSIZE; i += 8) {
             bitset<8> dataBlock;
             for(int j = 0; j < 8; ++j) {
                 dataBlock[j] = data[i + j];
             }
-            encodedData.push_back(encode(dataBlock));
+            encodedData.push_back(encodeBlock(dataBlock));
+        }*/
+
+        for(int i = 0; i < 4; ++i) {
+            bitset<8> block;
+
+            for (int j = 0; j < 8; ++j) {
+                block[j] = data[i * 8 + j];
+            }
+
+            bitset<12> encodedBlock = encodeBlock(block); // encode each 8-bits block into 12-bits
+            
+            for (int j = 0; j < 12; ++j) {
+                encodedData[i * 12 + j] = encodedBlock[j];
+            } // store encoded 12-bits block in 48-bits data storage
         }
-        return encodedData;
+        
+        return encodedData; // 48bits
     }
 
 }

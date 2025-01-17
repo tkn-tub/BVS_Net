@@ -1,0 +1,127 @@
+function hamming_ber_simulation()
+    % Parameters for Hamming (12,8)
+    n = 12;  % Codeword length
+    k = 8;   % Information bit length
+    packet_size = 32; % Number of bits per packet
+    num_packets = 200; % Number of packets to simulate
+    EbNo_dB = 0:0.1:10;  % Range of Eb/No in dB
+    results = zeros(length(EbNo_dB), 5); % To store results: [Eb/No, p_b, BER_receiver, PER_no_FEC, PER_with_FEC]
+
+    % Loop over Eb/No values
+    for i = 1:length(EbNo_dB)
+        % Calculate BER (p_b) for AWGN channel
+        p_b = calculate_ber(EbNo_dB(i));
+        
+        % Calculate uncorrected error probability
+        P_uncorrected = calculate_uncorrected_error_probability(n, p_b);
+        
+        % Calculate receiver BER
+        BER_receiver = (P_uncorrected * n) / k;
+        
+        % Calculate Packet Error Rate (PER) without FEC
+        PER_no_FEC = 1 - (1 - p_b)^packet_size;
+        
+        % Calculate PER with Hamming FEC
+        PER_with_FEC = 1 - (1 - BER_receiver)^packet_size;
+
+        % Store results
+        results(i, :) = [EbNo_dB(i), p_b, BER_receiver, PER_no_FEC, PER_with_FEC];
+    end
+
+    % Find intersection using linear interpolation
+    diff = results(:, 2) - results(:, 3);  % Difference between Channel BER and Receiver BER
+    indices = find(diff(1:end-1) .* diff(2:end) < 0);  % Find where the sign of difference changes
+
+    if ~isempty(indices)
+        % Interpolate to find the intersection point
+        idx = indices(1);  % Take the first crossing point
+        x1 = results(idx, 1); x2 = results(idx+1, 1);
+        y1 = diff(idx); y2 = diff(idx+1);
+
+        intersection_EbNo = x1 - y1 * (x2 - x1) / (y2 - y1);  % Linear interpolation
+        intersection_BER = results(idx, 2) + (results(idx+1, 2) - results(idx, 2)) * (intersection_EbNo - x1) / (x2 - x1);
+
+        fprintf('Intersection Point:\n');
+        fprintf('Eb/No (dB): %.2f\n', intersection_EbNo);
+        fprintf('BER: %.6e\n', intersection_BER);
+    else
+        fprintf('No intersection found within the given range.\n');
+        return;
+    end
+
+    % Find the index where the difference is closest to zero
+    %[~, idx] = min(abs(results(:, 2) - results(:, 3)));
+    %intersection_EbNo = results(idx, 1); % Corresponding Eb/No
+    %intersection_BER = results(idx, 2); % Corresponding BER
+
+    % Display results
+    fprintf('Eb/No (dB)\tChannel BER (p_b)\tReceiver BER\tPER (no FEC)\tPER (with FEC)\n');
+    for i = 1:length(EbNo_dB)
+        fprintf('%.4f\t\t%.6e\t\t%.6e\t\t%.6e\t\t%.6e\n', results(i, 1), results(i, 2), results(i, 3), results(i, 4), results(i, 5));
+    end
+    %fprintf('Intersection Point:\n');
+    %fprintf('Eb/No (dB): %.3f\n', intersection_EbNo);
+    %fprintf('BER: %.6e\n', intersection_BER);
+
+    % Plot results BER
+    figure(1);
+    semilogy(results(:, 1), results(:, 2), 'LineWidth', 1.5, 'DisplayName', 'Channel BER (p_b)');
+    hold on;
+    semilogy(results(:, 1), results(:, 3), 'LineWidth', 1.5, 'DisplayName', 'Receiver BER');
+    hold on;
+    % Mark the intersection point
+    semilogy(intersection_EbNo, intersection_BER, 'rs', 'MarkerSize', 10, ...
+        'LineWidth', 1, 'DisplayName', sprintf('Intersection: %.2f dB, %.2e', intersection_EbNo, intersection_BER));
+    grid on;
+    xlabel('Eb/No (dB)');
+    ylabel('BER');
+    legend('Location', 'Southwest');
+    title('Hamming (12,8) BER Performance');
+
+    % Plot results PER
+    figure(2);
+    semilogy(results(:, 1), results(:, 4), 'LineWidth', 1.5, 'DisplayName', 'PER');
+    hold on;
+    semilogy(results(:, 1), results(:, 5), 'LineWidth', 1.5, 'DisplayName', 'PER (With Hamming FEC)');
+    % Find the intersection point using linear interpolation
+    [x_intersection, y_intersection] = find_intersection_linear(results(:, 1), results(:, 4), results(:, 5));
+    % Plot the intersection point
+    plot(x_intersection, y_intersection, 'rs', 'MarkerSize', 10, 'LineWidth', 1, 'DisplayName', sprintf('Intersection: %.2f dB, %.2e', x_intersection, intersection_BER));
+    grid on;
+    xlabel('Eb/No (dB)');
+    ylabel('PER');
+    legend('Location', 'Southwest');
+    title('Hamming (12,8) PER Performance');
+end
+
+function p_b = calculate_ber(EbNo_dB)
+    % Calculate BER (p_b) for AWGN channel with OOK modulation
+    EbNo_linear = 10^(EbNo_dB / 10);  % Convert Eb/No from dB to linear scale
+    p_b = qfunc(sqrt(2 * EbNo_linear));  % Use Q-function for AWGN
+end
+
+function P_uncorrected = calculate_uncorrected_error_probability(n, p_b)
+    % Calculate uncorrected error probability for Hamming (12,8)
+    P_uncorrected = 0;
+    for j = 2:n  % Start from 2 errors since 0 and 1 errors are correctable
+        P_uncorrected = P_uncorrected + nchoosek(n, j) * (p_b^j) * ((1 - p_b)^(n - j));
+    end
+end
+
+function [x_intersection, y_intersection] = find_intersection_linear(x, y1, y2)
+    % Find intersection point of two curves using linear interpolation
+    for i = 1:length(x)-1
+        % Check if y1 and y2 have opposite signs at the endpoints
+        if (y1(i) - y2(i)) * (y1(i+1) - y2(i+1)) < 0
+            % Perform linear interpolation
+            x_intersection = x(i) + (x(i+1) - x(i)) * (0 - y1(i)) / (y1(i+1) - y1(i));
+            y_intersection = 0;  % Since we are finding the intersection where y = 0
+            return;
+        end
+    end
+    % If no intersection is found, return NaN
+    x_intersection = NaN;
+    y_intersection = NaN;
+end
+
+

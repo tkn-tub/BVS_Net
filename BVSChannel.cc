@@ -27,7 +27,7 @@ namespace ns3{
 
 BVSChannel::BVSChannel(float vesselthickness)
 {
- vector<Ptr<NetDevice> > devices;
+ vector<Ptr<NetDevice>> devices;
 
  m_devices = devices;
 
@@ -93,13 +93,20 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
 
   //uncomment for terminal output
 //	cout << "send : | ";
-        for(int i = 0; i < TESTPACKETSIZE; i++ )
-        {
-            (*mac_phy_data).SEQ_TX[i] = (*mac_phy_data).SEQ_TX[i] * sqrt(POWER);
+        for(int i = 0; i < TESTPACKETSIZE; i++) {
+			for (int j = 0; j < (*mac_phy_data).SEQ_TX[i].size(); j++) {
+				double modulatedData = (*mac_phy_data).SEQ_TX[i][j] * sqrt(POWER);
+				(*mac_phy_data).SEQ_RX[i][j] = modulatedData;
+			}
+			//(*mac_phy_data).SEQ_RX.push_back(seq_rx_row);
+			//(*mac_phy_data).SEQ_RX.push_back(noisySignal);
+			//(*mac_phy_data).SEQ_TX[j] = (*mac_phy_data).SEQ_TX[j] * sqrt(POWER);
+			
+            
 
- //          cout << (*mac_phy_data).SEQ_TX[i] << " | ";
+//          cout << (*mac_phy_data).SEQ_TX[i] << " | ";
 
-			(*mac_phy_data).SEQ_RX[i] = (*mac_phy_data).SEQ_TX[i];
+			//(*mac_phy_data).SEQ_RX[i] = (*mac_phy_data).SEQ_TX[i];
         }
 
 //	cout << "\n";
@@ -110,8 +117,11 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
 
 	double pathl{convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUETHICKNESS, m_vesselthickness))};
 
-	transform((*mac_phy_data).SEQ_RX.begin(),(*mac_phy_data).SEQ_RX.end(),
-			  (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*sqrt(pathl);});
+	for (auto& packet : (*mac_phy_data).SEQ_RX) {
+		transform(packet.begin(), packet.end(), packet.begin(), [&pathl](double& c) {return c*sqrt(pathl);});
+	}
+	/*transform((*mac_phy_data).SEQ_RX.begin(),(*mac_phy_data).SEQ_RX.end(),
+			  (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*sqrt(pathl);});*/
 
 	
 	vector<double> noise = createNoiseSequence();
@@ -129,11 +139,15 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
 
 //	cout << "recv : | ";
 	
-        for(int i = 0; i < TESTPACKETSIZE; i++ )
-        {
-			(*mac_phy_data).SEQ_RX[i] =  (*mac_phy_data).SEQ_RX[i] + noise[i];
+        for(int i = 0; i < TESTPACKETSIZE; i++) {
+			for (int j = 0; j < (*mac_phy_data).SEQ_RX[i].size(); j++) {
+				(*mac_phy_data).SEQ_RX[i][j] += noise[j];
+			} 
+			
+			//(*mac_phy_data).SEQ_RX[i] =  (*mac_phy_data).SEQ_RX[i] + noise[i];
          //  cout << (*mac_phy_data).SEQ_RX[i] << " | ";
         }
+		
 //    cout << "\n";
 
 	gdev->Receive(mac_phy_data, m_vesselthickness);
@@ -147,7 +161,7 @@ vector<double> BVSChannel::createNoiseSequence()
 
 	double c = 299792458.0; //speed of light in vacuum
 	double kB = 1.38064852e-23; //Boltzman constant
-	double t0 = 310; //reference temperature
+	double t0 = 310; //reference temperature !! to regulate !! one more degree
 	double k = 0.0072; //extinction coefficient from blood absoprtion coefficient
 
 	double Tmol = t0 * (1- exp((-4*M_PI*FREQ_THZ*(SKIN_THICKNESS+TISSUETHICKNESS+m_vesselthickness)*k)/c));  

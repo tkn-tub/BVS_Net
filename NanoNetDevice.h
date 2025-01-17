@@ -67,11 +67,14 @@ public:
     //intall to the node inside of the nanobot class
     void installToNode(Ptr<Node> node);
 
+    //return encoded 200 * 32bits packets
+    vector<bitset<48>> encodePackets(const vector<bitset<32>>& packets);
+
     //encode 8bits data into 12bits Hamming code
-    bitset<12> encode(const bitset<8>& data);
+    bitset<12> encodeBlock(const bitset<8>& data);
 
     //divide 32bits data into 8bits data block using Hamming(12,8)
-    vector<bitset<12>> encode32Bits(const bitset<32>& data);
+    bitset<48> encode(const bitset<32>& data);
     
     // inherited from NetDevice base class, are set to dummy values 
     void SetIfIndex(const uint32_t index) override{}; 
@@ -116,7 +119,6 @@ private:
     Ptr<Node> m_node;
 
     MAC_PHY_DATA *m_mac_phy_data;
-
 };
 
 

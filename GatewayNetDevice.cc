@@ -59,21 +59,57 @@ TypeId GatewayNetDevice::GetTypeId(void) {
 void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
 {
 
-    for(int i = 0; i < TESTPACKETSIZE; i++)
+    /*for(int i = 0; i < TESTPACKETSIZE; i++)
     {
         if ((*data).SEQ_RX[i] < 0)
-        (*data).PDU_RX[i] = 0;
+        (*data).PDU_RX2[i] = 0;
         else
-        (*data).PDU_RX[i] = 1;
+        (*data).PDU_RX2[i] = 1;
+    }*/
+    // OOK Demodulation
+    for (const auto& packet : data->SEQ_RX) {
+        bitset<48> demodulatedPacket;
+        for (size_t i = 0; i < packet.size(); i++) {
+            demodulatedPacket[i] = (packet[i] > 0) ? 1 : 0;
+        } 
+        data->PDU_RX2.push_back(demodulatedPacket);
     }
 
-    bitset<32> decodedData = decode48bits((*data).PDU_RX);
+    // Hamming Decoding
+    for (size_t i = 0; i < TESTPACKETSIZE; i++) {
+        bitset<48> encodedBlock = data->PDU_RX2[i];
+
+        // divide 48 data block into 4 blocks
+        bitset<12> block1 = extractBlock(encodedBlock, 0);
+        bitset<12> block2 = extractBlock(encodedBlock, 12);
+        bitset<12> block3 = extractBlock(encodedBlock, 24);
+        bitset<12> block4 = extractBlock(encodedBlock, 36);
+
+        // decode each block into 8 bits
+        bitset<8> decodedBlock1 = decodeBlock(block1);
+        bitset<8> decodedBlock2 = decodeBlock(block2);
+        bitset<8> decodedBlock3 = decodeBlock(block3);
+        bitset<8> decodedBlock4 = decodeBlock(block4);
+
+        // integrate these 4 blocks into a 32bits frame
+        bitset<32> decodedPacket(0);
+        for (int j = 0; j < 8; j++) {
+            decodedPacket[j] = decodedBlock1[j];
+            decodedPacket[j + 8] = decodedBlock2[j];
+            decodedPacket[j + 16] = decodedBlock3[j];
+            decodedPacket[j + 24] = decodedBlock4[j];
+        }
+        data->PDU_RX.push_back(decodedPacket);
+    }
+
+
+    /*bitset<32> decodedData = decode((*data).PDU_RX2);
     
     for(int i = 0; i < TESTPACKETSIZE; i++) {
         (*data).PDU_RX[i] = decodedData[i];
     }
 
-    m_storage.push_back((*data));
+    m_storage.push_back((*data));*/
 
     //output decoded data
     /*for(int i = 0; i < TESTPACKETSIZE; i++) {
@@ -97,75 +133,178 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
 
     afout.open("gateway_amplitudes.csv", ios::out | ios::app);
 
-    for (double i : data->SEQ_RX)
-            afout << i << ",";
-
-    afout << "\n";
+    for (size_t i = 0; i < data->SEQ_RX.size(); ++i) {
+        const vector<double>& packet = data->SEQ_RX[i];
+        for (size_t j = 0; j < packet.size(); ++j) {
+            afout << packet[j];
+            if (j != packet.size() - 1) {
+                afout << ",";
+            }
+        }
+        afout << "\n";
+    }
+    
 
     fstream fout;
 
-    fout.open("gateway.csv", ios::out | ios::app); 
+    fout.open("gateway_sen.csv", ios::out | ios::app); 
 
     fout  << data->nanobot_ID << "; "
             << data->tissue_ID << "; ";
 
-    for (int i : data->PDU_TX)
+    for (size_t i = 0; i < TESTPACKETSIZE; ++i) {
+        const bitset<32>& packet = data->PDU_TX[i];
+        for (size_t j = 0; j < 32; ++j) {
+            fout << packet[j];
+            if (j < 31) fout << ",";
+        }
+        fout << "\n";
+    }
+
+    fstream bout;
+
+    bout.open("gateway_rec.csv", ios::out | ios::app);
+
+    for (size_t i = 0; i < TESTPACKETSIZE; ++i) {
+        const bitset<32>& packet = data->PDU_RX[i];
+        for (size_t j = 0; j < 32; ++j) {
+            bout << packet[j];
+            if (j < 31) bout << ",";
+        }
+        bout << "\n";
+    } 
+
+    /*for (size_t i = 0; i < data->PDU_TX.size(); ++i) {
+        int bit = data->PDU_TX[i];
+        fout << bit << ",";
+    }  
+    fout << "; ";
+    fout << "\n"; */                 
+
+    /*for (int i : data->PDU_TX)
             fout << i << ",";
 
-    fout << "; ";
+    fout << "; ";*/
 
-    for (double i : data->SEQ_TX)
+    /*for (size_t i = 0; i < data->PDU_TX2.size(); ++i) {
+        int bit = data->PDU_TX2[i];
+        fout << bit << ",";
+    }
+    fout << "; ";
+    fout << "\n";*/
+
+    /*for (int i : data->PDU_TX2)
             fout << i << ",";
 
-    fout << "; ";
+    fout << "; ";*/
 
-    for (double i : data->SEQ_RX)
+    /*for (size_t i = 0; i < data->SEQ_TX.size(); ++i) {
+        int bit = data->SEQ_TX[i];
+        cout << bit << ",";
+    }
+    fout << "; ";
+    fout << "\n";*/
+
+    /*for (double i : data->SEQ_TX)
+            fout << i << ",";
+
+    fout << "; ";*/
+
+    /*for (double i : data->SEQ_RX)
             fout << i << ",";
             
     fout << "; ";
+    fout << "\n";*/
 
-    for (int i : data->PDU_RX)
+    /*for (size_t i = 0; i < data->PDU_RX2.size(); ++i) {
+        int bit = data->PDU_RX2[i];
+        fout << bit << ",";
+    }
+    fout << "; ";
+    fout << "\n";*/
+
+    /*for (int i : data->PDU_RX2)
+            fout << i << ",";
+
+    fout << "; ";*/
+
+    /*for (size_t i = 0; i < data->PDU_RX.size(); ++i) {
+        int bit = data->PDU_RX[i];
+        fout << bit << ",";
+    }
+    fout << "; ";
+    fout << "\n";*/
+
+    /*for (int i : data->PDU_RX)
             fout << i << ",";
 
     fout << "; ";
 
-    fout << "\n";
+    fout << "\n";*/
 
 
-    int be = CalculateErrorBits(data);
+    //int be = CalculateErrorBits(data);
 
-    int pe = 0;
+    //int pe = ;
 
     fstream foutber;
 
-    foutber.open("gateway_ber.csv", ios::out | ios::app); 
+    foutber.open("gateway_ber.csv", ios::out | ios::app);
+    double ber = CalculateBER(data);
+    foutber << ber << ",";
+    foutber << "\n";
+    
+    //foutber << be << ",";
+    //foutber << size(data->PDU_RX) << ",";
 
-    foutber <<  be << ",";
+    fstream foutper;
 
-    foutber << size(data->PDU_RX) << ",";
+    foutper.open("gateway_per.csv", ios::out | ios::app);
+    double per = CalculatePER(data);
+    foutper << per << ",";
+    foutper << vesselthickness << "\n";
 
-    if (be > 0)
+    /*if (be > 0)
         pe = 1;
 
     foutber << pe << ",";
 
-    foutber << vesselthickness << "\n";
+    foutber << vesselthickness << "\n";*/
 }
 
-int GatewayNetDevice::CalculateErrorBits(MAC_PHY_DATA *data)
-{
-int retval = 0;
+double GatewayNetDevice::CalculateBER(MAC_PHY_DATA *data) {
+    int errorCount = 0;
 
-for(int i = 0; i < TESTPACKETSIZE; i++)
-{
-    if(data->PDU_RX[i] != data->PDU_TX[i])
+    for (int i = 0; i < TESTPACKETSIZE; i++) {
+        errorCount += (data->PDU_RX[i] ^ data->PDU_TX[i]).count(); // calculate how many erroneous bits in a frame by using XOR
+    } // XOR returns 0 if there is no differet bit, 1 if there is different bit
+
+    double totalBits = static_cast<double>(TESTPACKETSIZE * 32);
+    double ber = static_cast<double>(errorCount) / totalBits; // BER = erroneous bits / total bits in a whole test simulation
+    return ber;
+}
+
+double GatewayNetDevice::CalculatePER(MAC_PHY_DATA *data) {
+    int errorCount = 0;
+
+    for (int i = 0; i < TESTPACKETSIZE; i++) {
+        if (data->PDU_RX[i] != data->PDU_TX[i]) {
+            errorCount++;
+        }
+    }
+
+    double per = static_cast<double>(errorCount) / TESTPACKETSIZE;
+    return per;
+}
+
+int GatewayNetDevice::CalculateErrorBits(MAC_PHY_DATA *data) {
+    int retval = 0;
+
+    for(int i = 0; i < TESTPACKETSIZE; i++) {
+        if(data->PDU_RX[i] != data->PDU_TX[i])
         retval++;
-
-}
-
-return retval;
-
-
+    }
+    return retval;
 }
 
 Address GatewayNetDevice::GetAddress() const
@@ -225,56 +364,123 @@ Ptr<Node> GatewayNetDevice::GetNode() const
         return m_position;
     }
 
-    bitset<8> GatewayNetDevice::decode(const bitset<12>& encodedData) {
+    bitset<8> GatewayNetDevice::decodeBlock(const bitset<12>& block) {
+        int errorPosition = detectError(block);
+
         bitset<8> data;
 
         //extract data bits
-        data[0] = encodedData[2];
-        data[1] = encodedData[4];
-        data[2] = encodedData[5];
-        data[3] = encodedData[6];
-        data[4] = encodedData[8];
-        data[5] = encodedData[9];
-        data[6] = encodedData[10];
-        data[7] = encodedData[11];
+        data[0] = block[2]; //d1
+        data[1] = block[4]; //d2
+        data[2] = block[5]; //d3
+        data[3] = block[6]; //d4
+        data[4] = block[8]; //d5
+        data[5] = block[9]; //d6
+        data[6] = block[10]; //d7
+        data[7] = block[11]; //d8
 
-        //calcualte the error position using parity check
-        int p1 = encodedData[0] ^ encodedData[2] ^ encodedData[4] ^ encodedData[6] ^ encodedData[8] ^ encodedData[10];
-        int p2 = encodedData[1] ^ encodedData[2] ^ encodedData[5] ^ encodedData[6] ^ encodedData[9] ^ encodedData[10];
-        int p4 = encodedData[3] ^ encodedData[4] ^ encodedData[5] ^ encodedData[6] ^ encodedData[11];
-        int p8 = encodedData[7] ^ encodedData[8] ^ encodedData[9] ^ encodedData[10] ^ encodedData[11];
+        if (errorPosition > 0 && errorPosition <= 12) {
+            int correctedIndex = -1;
 
-        int errorPosition = (p8 << 3) | (p4 << 2) | (p2 << 1) | p1;
+            switch (errorPosition) {
+            case 3: correctedIndex = 0; break;  // d1 (block[2])
+            case 5: correctedIndex = 1; break;  // d2 (block[4])
+            case 6: correctedIndex = 2; break;  // d3 (block[5])
+            case 7: correctedIndex = 3; break;  // d4 (block[6])
+            case 9: correctedIndex = 4; break;  // d5 (block[8])
+            case 10: correctedIndex = 5; break; // d6 (block[9])
+            case 11: correctedIndex = 6; break; // d7 (block[10])
+            case 12: correctedIndex = 7; break; // d8 (block[11])
 
-        //correct error if it exists
-        if (errorPosition != 0) {
-            encodedData.flip(errorPosition - 1); //Bei flip werden die Bitwerte umgedreht, indem Nullen in Einsen und Einsen in Nullen umgewandelt werden
-        }
-
-        //extract the modified data
-        data[0] = encodedData[2];
-        data[1] = encodedData[4];
-        data[2] = encodedData[5];
-        data[3] = encodedData[6];
-        data[4] = encodedData[8];
-        data[5] = encodedData[9];
-        data[6] = encodedData[10];
-        data[7] = encodedData[11];
-
-        return data;
-    }
-
-    bitset<32> GatewayNetDevice::decode48bits(const vector<bitset<12>>& encodedData) {
-        bitset<32> data;
-
-        for (int i = 0; i < 4; ++i) {
-            bitset<8> decodedBlock = decode(encodedData[i]);
-            for (int j = 0; j < 8; ++j) {
-                data[i * 8 + j] = decodedBlock[j];
+            if (correctedIndex != -1) {
+                data.flip(correctedIndex);  // correct error
+                }
             }
+            
+            /*bitset<12> correctedBlock = block;
+            correctedBlock.flip(errorPosition - 1);
+
+            data[0] = correctedBlock[2];
+            data[1] = correctedBlock[4];
+            data[2] = correctedBlock[5];
+            data[3] = correctedBlock[6];
+            data[4] = correctedBlock[8];
+            data[5] = correctedBlock[9];
+            data[6] = correctedBlock[10];
+            data[7] = correctedBlock[11];*/
         }
+
         return data;
     }
+
+    int GatewayNetDevice::detectError(const bitset<12>& block) {
+        // calculate position of error using parity check, Hamming code detects only 1 error at one time
+        int p1 = block[0] ^ block[2] ^ block[4] ^ block[6] ^ block[8] ^ block[10];
+        int p2 = block[1] ^ block[2] ^ block[5] ^ block[6] ^ block[9] ^ block[10];
+        int p3 = block[3] ^ block[4] ^ block[5] ^ block[6] ^ block[11];
+        int p4 = block[7] ^ block[8] ^ block[9] ^ block[10] ^ block[11];
+
+        int errorPos = (p4 << 3) | (p3 << 2) | (p2 << 1) | p1;
+        return errorPos; // 0 means no error, 1 means 1st bit is error, 2 means ... 12 means 12th bit is error
+    }
+
+    /*void GatewayNetDevice::flipBit(bitset<12>& block, int position) {
+        //block[position] = block[position] == 1 ? 0 : 1;
+        block.flip(position);
+    }*/
+
+    bitset<12> GatewayNetDevice::extractBlock(const bitset<48>& data, int startBit) {
+       bitset<12> block;
+        for (int i = 0; i < 12; i++) {
+            block[i] = data[startBit + i];
+        }
+        return block;
+    }
+
+    
+    //bitset<32> GatewayNetDevice::decodePacket(const bitset<48>& encodedPacket) {
+    //    bitset<32> decodedPacket;
+
+    //    for (int i = 0; i < 4; ++i) {
+    //        bitset<12> block;
+    //        for(int j = 0; j < 12; ++j) {
+    //            block[j] = encodedPacket[i * 12 + j];
+    //        }
+
+    //        bitset<8> decodedBlock = decodeBlock(block);
+
+    //        for (int j = 0; j < 8; ++j) {
+    //            decodedPacket[i * 8 + j] = decodedBlock[j];
+    //        }
+    //    }
+
+        // divide 48-bits in 4 blocks of 12-bits and decode each block
+        /*for (int i = 0; i < 4; ++i) {
+            bitset<12> block;
+
+            for (int j = 0; j < 12; ++j) {
+                block[j] = encodedPacket[i * 12 + j];
+            }
+
+            // detect the error position
+            int errorPos = detectError(block);
+
+            // if there is an error, flip the corresponding bit
+            if (errorPos > 0 && errorPos <= 12) {
+                flipBit(block, errorPos - 1);
+            }
+
+            // 12-bits block into 8-bits block
+            bitset<8> dataBits = decodeBlock(block);
+
+            // store as 32-bits data
+            for (int j = 0; j < 8; ++j) {
+                decodedData[i * 8 + j] = dataBits[j];
+            }
+        }*/
+    //    return decodedPacket;
+    //}
+    
 
 }
 
