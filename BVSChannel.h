@@ -30,11 +30,12 @@
 #include <algorithm>
 #include <random>
 #include <map>
+#include <bitset>
 #include "terahertz.h"
 
 
 // parameter for channel model (terrahertz)
-#define TESTPACKETSIZE 200
+#define TESTPACKETSIZE 32
 #define FREQ_THZ 0.5*pow(10,12)
 #define DIST_INIT 500*pow(10,-6)
 #define SKIN_THICKNESS 76*pow(10,-6)

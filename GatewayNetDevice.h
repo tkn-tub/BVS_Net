@@ -66,6 +66,12 @@ public:
 
     int getPosition();
 
+    //correct 12bits hamming code and output modified 8bits data
+    bitset<8> decode(const bitset<12>& encodedData);
+
+    //divide 48bits data into 12bits block and decode into 32bits data
+    bitset<32> decode48bits(const vector<bitset<12>>& encodedData);
+
 	// inherited from NetDevice base class, set to dummy values
     void SetIfIndex(const uint32_t index) override{}; 
     uint32_t GetIfIndex() const override{return 0;};

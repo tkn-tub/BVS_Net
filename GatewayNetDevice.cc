@@ -66,9 +66,23 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
         else
         (*data).PDU_RX[i] = 1;
     }
+
+    bitset<32> decodedData = decode48bits((*data).PDU_RX);
     
-   //uncomment for terminal output
-   /* 
+    for(int i = 0; i < TESTPACKETSIZE; i++) {
+        (*data).PDU_RX[i] = decodedData[i];
+    }
+
+    m_storage.push_back((*data));
+
+    //output decoded data
+    /*for(int i = 0; i < TESTPACKETSIZE; i++) {
+        cout << (*data).PDU_RX[i] << " | ";
+    }
+    cout << "\n";*/
+    
+    //uncomment for terminal output
+    /* 
     cout << "dec : | ";
 
     for(int i = 0; i < TESTPACKETSIZE; i++)
@@ -78,7 +92,6 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
 
     cout << "\n";
     */
-    m_storage.push_back((*data));
 
     fstream afout;
 
@@ -210,6 +223,57 @@ Ptr<Node> GatewayNetDevice::GetNode() const
     int GatewayNetDevice::getPosition()
     {
         return m_position;
+    }
+
+    bitset<8> GatewayNetDevice::decode(const bitset<12>& encodedData) {
+        bitset<8> data;
+
+        //extract data bits
+        data[0] = encodedData[2];
+        data[1] = encodedData[4];
+        data[2] = encodedData[5];
+        data[3] = encodedData[6];
+        data[4] = encodedData[8];
+        data[5] = encodedData[9];
+        data[6] = encodedData[10];
+        data[7] = encodedData[11];
+
+        //calcualte the error position using parity check
+        int p1 = encodedData[0] ^ encodedData[2] ^ encodedData[4] ^ encodedData[6] ^ encodedData[8] ^ encodedData[10];
+        int p2 = encodedData[1] ^ encodedData[2] ^ encodedData[5] ^ encodedData[6] ^ encodedData[9] ^ encodedData[10];
+        int p4 = encodedData[3] ^ encodedData[4] ^ encodedData[5] ^ encodedData[6] ^ encodedData[11];
+        int p8 = encodedData[7] ^ encodedData[8] ^ encodedData[9] ^ encodedData[10] ^ encodedData[11];
+
+        int errorPosition = (p8 << 3) | (p4 << 2) | (p2 << 1) | p1;
+
+        //correct error if it exists
+        if (errorPosition != 0) {
+            encodedData.flip(errorPosition - 1); //Bei flip werden die Bitwerte umgedreht, indem Nullen in Einsen und Einsen in Nullen umgewandelt werden
+        }
+
+        //extract the modified data
+        data[0] = encodedData[2];
+        data[1] = encodedData[4];
+        data[2] = encodedData[5];
+        data[3] = encodedData[6];
+        data[4] = encodedData[8];
+        data[5] = encodedData[9];
+        data[6] = encodedData[10];
+        data[7] = encodedData[11];
+
+        return data;
+    }
+
+    bitset<32> GatewayNetDevice::decode48bits(const vector<bitset<12>>& encodedData) {
+        bitset<32> data;
+
+        for (int i = 0; i < 4; ++i) {
+            bitset<8> decodedBlock = decode(encodedData[i]);
+            for (int j = 0; j < 8; ++j) {
+                data[i * 8 + j] = decodedBlock[j];
+            }
+        }
+        return data;
     }
 
 }
