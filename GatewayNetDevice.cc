@@ -67,11 +67,16 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
         (*data).PDU_RX2[i] = 1;
     }*/
     // OOK Demodulation
-    for (const auto& packet : data->SEQ_RX) {
+    for (size_t i = 0; i < data->SEQ_RX.size(); i++) {
         bitset<48> demodulatedPacket;
-        for (size_t i = 0; i < packet.size(); i++) {
-            demodulatedPacket[i] = (packet[i] > 0) ? 1 : 0;
-        } 
+        
+        for (size_t j = 0; j < data->SEQ_RX[i].size(); j++) {
+            if (data->SEQ_RX[i][j] > 0) {
+                demodulatedPacket[j] = 1;
+            } else {
+                demodulatedPacket[j] = 0;
+            }
+        }
         data->PDU_RX2.push_back(demodulatedPacket);
     }
 
@@ -145,7 +150,7 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
     }
     
 
-    fstream fout;
+    /*fstream fout;
 
     fout.open("gateway_sen.csv", ios::out | ios::app); 
 
@@ -159,11 +164,11 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
             if (j < 31) fout << ",";
         }
         fout << "\n";
-    }
+    }*/
 
     fstream bout;
 
-    bout.open("gateway_rec.csv", ios::out | ios::app);
+    bout.open("gateway.csv", ios::out | ios::app);
 
     for (size_t i = 0; i < TESTPACKETSIZE; ++i) {
         const bitset<32>& packet = data->PDU_RX[i];
@@ -172,7 +177,7 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
             if (j < 31) bout << ",";
         }
         bout << "\n";
-    } 
+    }
 
     /*for (size_t i = 0; i < data->PDU_TX.size(); ++i) {
         int bit = data->PDU_TX[i];
@@ -253,16 +258,21 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
     double ber = CalculateBER(data);
     foutber << ber << ",";
     foutber << "\n";
+
+    cout << "Bit Error Rate (BER): " << ber << endl;
     
     //foutber << be << ",";
     //foutber << size(data->PDU_RX) << ",";
 
-    fstream foutper;
+    //fstream foutper;
 
-    foutper.open("gateway_per.csv", ios::out | ios::app);
+    //foutper.open("gateway_per.csv", ios::out | ios::app);
     double per = CalculatePER(data);
-    foutper << per << ",";
-    foutper << vesselthickness << "\n";
+    //foutper << per << ",";
+    //foutper << vesselthickness << "\n";
+    
+    cout << "Packet Error Rate (PER): " << per << endl;
+    cout << "Vessel Thickness: " << vesselthickness << endl;
 
     /*if (be > 0)
         pe = 1;
