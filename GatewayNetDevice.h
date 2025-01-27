@@ -73,19 +73,13 @@ public:
     int getPosition();
 
     //correct 12bits hamming code and output modified 8bits data
-    bitset<8> decodeBlock(const bitset<12>& block);
+    vector<int> decodeBlock(const vector<int>& block);
 
     //detect error position
-    int detectError(const bitset<12>& block);
-
-    //decode 48-bits data into 32-bits data
-    //bitset<32> decodePacket(const bitset<48>& encodedPacket);
-
-    //flip the corresponding bit
-    //void flipBit(bitset<12>& block, int position);
+    int detectError(const vector<int>& block);
 
     //extract 12 bits block out of 48 bits frame for a simple decoding process
-    bitset<12> extractBlock(const bitset<48>& data, int startBit);
+    vector<int> extractBlock(const vector<int>& data, int startBit);
 
 	// inherited from NetDevice base class, set to dummy values
     void SetIfIndex(const uint32_t index) override{}; 

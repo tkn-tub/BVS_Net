@@ -60,19 +60,17 @@ struct MAC_PHY_DATA {
 
         int tissue_ID; // ID of body part where to measure 
         
-        vector<bitset<32>> PDU_TX; // Bit stream of measurement data at nanobot
+        vector<int> PDU_TX; // Bit stream of measurement data at nanobot
 
-		vector<bitset<48>> PDU_TX2; // Encoded bit stream of measurement data at nanobot by FEC
+		vector<int> PDU_TX2; // Encoded bit stream of measurement data at nanobot by FEC
 
-        vector<vector<int>> SEQ_TX; // Amplitude stream of measurement data send at nanobot
+        vector<double> SEQ_TX; // Amplitude stream of measurement data send at nanobot
 
-        vector<vector<double>> SEQ_RX; // Amplitude stream of measurement data received at gateway
+        vector<double> SEQ_RX; // Amplitude stream of measurement data received at gateway
 
-		//vector<bitset<48>> SEQ_RX2; // Amplitude stream of measurement data received at gateway in bitset data type
+		vector<int> PDU_RX2; // Demodulated bit stream of measurement data at gateway
 
-		vector<bitset<48>> PDU_RX2; // Demodulated bit stream of measurement data at gateway
-
-        vector<bitset<32>> PDU_RX; // decoded bit stream of measurement data at gateway by FEC
+        vector<int> PDU_RX; // decoded bit stream of measurement data at gateway by FEC
         
 };
 

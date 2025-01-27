@@ -90,65 +90,23 @@ void BVSChannel::send(Ptr<NanoNetDevice> ndev, int pos)
 
 	 *(mac_phy_data) = *(ndev->getMacPhyData());
 
-
-  //uncomment for terminal output
-//	cout << "send : | ";
-        for(int i = 0; i < TESTPACKETSIZE; i++) {
-			for (int j = 0; j < (*mac_phy_data).SEQ_TX[i].size(); j++) {
-				double modulatedData = (*mac_phy_data).SEQ_TX[i][j] * sqrt(POWER);
-				(*mac_phy_data).SEQ_RX[i][j] = modulatedData;
-			}
-			//(*mac_phy_data).SEQ_RX.push_back(seq_rx_row);
-			//(*mac_phy_data).SEQ_RX.push_back(noisySignal);
-			//(*mac_phy_data).SEQ_TX[j] = (*mac_phy_data).SEQ_TX[j] * sqrt(POWER);
-			
-            
-
-//          cout << (*mac_phy_data).SEQ_TX[i] << " | ";
-
-			//(*mac_phy_data).SEQ_RX[i] = (*mac_phy_data).SEQ_TX[i];
-        }
-
-//	cout << "\n";
+    for(int i = 0; i < 300; ++i) {
+		(*mac_phy_data).SEQ_TX[i] = (*mac_phy_data).SEQ_TX[i] * sqrt(POWER);
+		(*mac_phy_data).SEQ_RX[i] = (*mac_phy_data).SEQ_TX[i];
+    }
 
 	// length of channel, 100 samples, memory, MULITPLICATION for now -> no memory
 	double comm_dist = sqrt(pow(DIST_INIT,2) + pow(SKIN_THICKNESS + TISSUETHICKNESS + m_vesselthickness,2));
-	//cout << "pathloss" << convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUETHICKNESS, m_vesselthickness)) << "\n";
-
+	
 	double pathl{convertdBToWatt(-pathLoss(FREQ_THZ, comm_dist, SKIN_THICKNESS, TISSUETHICKNESS, m_vesselthickness))};
 
-	for (auto& packet : (*mac_phy_data).SEQ_RX) {
-		transform(packet.begin(), packet.end(), packet.begin(), [&pathl](double& c) {return c*sqrt(pathl);});
-	}
-	/*transform((*mac_phy_data).SEQ_RX.begin(),(*mac_phy_data).SEQ_RX.end(),
-			  (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*sqrt(pathl);});*/
+	transform((*mac_phy_data).SEQ_RX.begin(),(*mac_phy_data).SEQ_RX.end(), (*mac_phy_data).SEQ_RX.begin(), [&pathl](auto& c){return c*sqrt(pathl);});
 
-	
 	vector<double> noise = createNoiseSequence();
 
-	  //uncomment for terminal output
-   
-
-/*	cout << "noise : | ";
-        for(int i = 0; i < TESTPACKETSIZE; i++ )
-        {
-            cout << noise[i] << " | ";
-        }
-    cout << "\n";
-*/
-
-//	cout << "recv : | ";
-	
-        for(int i = 0; i < TESTPACKETSIZE; i++) {
-			for (int j = 0; j < (*mac_phy_data).SEQ_RX[i].size(); j++) {
-				(*mac_phy_data).SEQ_RX[i][j] += noise[j];
-			} 
-			
-			//(*mac_phy_data).SEQ_RX[i] =  (*mac_phy_data).SEQ_RX[i] + noise[i];
-         //  cout << (*mac_phy_data).SEQ_RX[i] << " | ";
-        }
-		
-//    cout << "\n";
+    for (int i = 0; i < 300; ++i) {
+        (*mac_phy_data).SEQ_RX[i] += noise[i];
+    }
 
 	gdev->Receive(mac_phy_data, m_vesselthickness);
 }
@@ -176,37 +134,13 @@ vector<double> BVSChannel::createNoiseSequence()
 	vector<double> ret_val(TESTPACKETSIZE,0);
 
 	
-	for(int i = 0; i < TESTPACKETSIZE; i++)
+	for(int i = 0; i < 300; i++)
 	{
 		ret_val[i] = d(gen);
 	}
 
 	
 	return ret_val;
-
-	
-   /*
-	// Seed the random number generator
-    std::srand(42); // Using a fixed seed value
-
-	// Vector to store the output
-    std::vector<double> ret_val(TESTPACKETSIZE);
-
-    // Generate white Gaussian noise using Box-Muller Transform
-    for (int j = 0; j < TESTPACKETSIZE; ++j) {
-        double u1, u2, s;
-
-        // Generate two uniform random numbers in (0, 1)
-        u1 = (std::rand() + 1.0) / (RAND_MAX + 1.0); // +1 to avoid 0
-        u2 = (std::rand() + 1.0) / (RAND_MAX + 1.0); // +1 to avoid 0
-
-        // Box-Muller transform
-        double z0 = sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2); // Standard normal variable
-        ret_val[j] = z0 * stddev; // Scale by the standard deviation
-    }
-	return ret_val;
-
-	*/
 }
 
 
