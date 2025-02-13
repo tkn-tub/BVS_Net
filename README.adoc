@@ -1,6 +1,6 @@
 = Forward Error Correction Codes in Intra-body Links through ns-3 flow : Development of FEC Module in ns-3 and Integrating into BVS Simulator
 Yerim Lee <yerim.lee@campus.tu-berlin.de>
-v2.1, 2024-02-12
+2024-02-14
 
 Forward Error Correction Codes for a better networking in BVS Simulator
 
@@ -15,15 +15,16 @@ BVS is a ns-3 module that simulates the global movement of objects in the human 
 
 BVS v2.1 introduces the possibility to model the communication channel, between the nanobots and the gateways, which would in real apllications be situated at the skin level and is in simulation a synthetic data generator for database usage. The mobility model is left unchanged, but we added multiple modules to measure, transmit and receive data. 
 
-If you are looking for a way to visualize the mobility part of the simulation results please visit the extended github for BVS-VIS. 
+If you are looking for a way to visualize the mobility part of the simulation results please visit the extended github for BVS-VIS.
+
+As shown in this project, BVS with Forward Error Correction (FEC) Codes serves as a method for detecting and correction errors in the communicstion link. In 2 seperate classes, which are nanobots and gateway respectively, there are 2 seperate FEC encoder and decoder, that respectively encodes transmitted data packets and detects/corrects errors during transmission. These FEC attributes are appropriately determined according to the Wireless Sensor Network (WSN) channel characteristics such as Bit Error Rate (BER) and the degree of error burstiness. Therefore, FEC modules not only detects and corrects errors in the communication link module developed thus far but is also expected to significantly enhance the overall quality of future nanoscale communication modules.
 
 
 == New features
  
-  - FEC Module using
-  - Outputs the received packages into a csv file (gateway.csv)
-  - Calculates the bit error and package error rate per transmission (gateway_ber.csv)
-  - Possibility to have a single run or a multi parameter sweep with respect to tissue thickness.
+  - FEC Module using Hamming (12, 8) encoder and decoder
+  - Outputs the received packages into a csv file (gateway_data.csv)
+  - Calculates the bit error rate per transmission (gateway_ber_global.csv)
 
 
 == Existing features
@@ -33,20 +34,18 @@ If you are looking for a way to visualize the mobility part of the simulation re
   - Injection of nanobots in specific vessels
   - Provides global position data of nanobots (/ns-3.2x/csvNano.csv)
   - easy data analysis with provided MATLAB files 
-  - Models a terahertz channel transmission between nanobots and gateway 
-  - Outputs the received packages into a csv file (gateway.csv)
-  - Calculates the bit error and package error rate per transmission (gateway_ber.csv)
+  - Models a terahertz channel transmission between nanobots and gateway
   - Possibility to have a single run or a multi parameter sweep with respect to tissue thickness.
   
 == New Parameters
 
-  - tissue thickness
+  - tissue thickness: 10^-3
   - Size of symbols of one transmitted package: TESTPACKETSIZE 200
   - transmission frequency: FREQ_THZ 0.5*10^12
   - initial distance between nanobot and gateway: DIST_INIT 850*10^-6
   - initial thickness of skin: SKIN_THICKNESS 76*10^-6
   - initial thickness of blood vessel: VESSEL_THICKNESS 200*10^-6
-  - initial transmit power: POWER 4*10^3
+  - initial transmit power: POWER 10^2
   - structure of output packet:
   -- struct MAC_PHY_DATA
 
@@ -56,11 +55,15 @@ If you are looking for a way to visualize the mobility part of the simulation re
         
         vector<int> PDU_TX; // Bit stream of measurement data at nanobot
 
+	vector<int> PDU_TX2; // Encoded bit stream of measurement data at nanobot by FEC
+
         vector<double> SEQ_TX; // Amplitude stream of measurement data send at nanobot
 
         vector<double> SEQ_RX; // Amplitude stream of measurement data received at gateway
 
-        vector<int> PDU_RX; // decoded bit stream of measurement data at gateway
+	vector<int> PDU_RX2; // Demodulated bit stream of measurement data at gateway
+
+        vector<int> PDU_RX; // Decoded bit stream of measurement data at gateway by FEC
 	
 	
 == Existing parameters
@@ -164,8 +167,8 @@ image::sequencediagram.pdf[Sequencediagram,890, width=80%]
     
 The simulation returns:
 	- a csv-file (/ns-3.40/csvNano.csv) with the position data of the simulated nanobots in every timestep. 
-	- a csv-file (/ns-3.40/gateway.csv) with the transmitted data of the simulated nanobots.
-	- a csv-file (/ns-3.40/gateway_ber.csv) with the calcualted ber and per of the simulated nanobots.
+	- a csv-file (/ns-3.40/gateway_data.csv) with the transmitted data of the simulated nanobots.
+	- a csv-file (/ns-3.40/gateway_ber_glob.csv) with the calcualted ber.
 
 == Appendix: Model
 image::Images/table1.pdf[Table,890, width=60%]
