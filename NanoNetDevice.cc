@@ -1,6 +1,6 @@
 /*
  * NanoNetDevice.cc
- * Copyright (c) 2024 Technische Universität Berlin 
+ * Copyright (c) 2025 Technische Universität Berlin 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -14,8 +14,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- *  Created on: 2023. 12. 6.
- *      Author: Laurenz Ebner
+ *  Created on: 2024. 02. 13.
+ *      Author: Yerim Lee
  */
 
 
@@ -36,25 +36,23 @@ namespace ns3 {
 */
     NanoNetDevice::NanoNetDevice ()
     {
-
         m_channel = nullptr;
 
         m_node = nullptr;
 
         vector<int> zero_bits(TESTPACKETSIZE, 0);
-
+        vector<int> zero_bits2(300, 0);
         vector<double> zero_samples(300, 0.0);
 
         m_mac_phy_data = new MAC_PHY_DATA;
 
         (*m_mac_phy_data).PDU_TX = zero_bits;
-        (*m_mac_phy_data).PDU_TX2 = zero_bits;
+        (*m_mac_phy_data).PDU_TX2 = zero_bits2;
         (*m_mac_phy_data).SEQ_TX = zero_samples;
         (*m_mac_phy_data).SEQ_RX = zero_samples;
-        (*m_mac_phy_data).PDU_RX2 = zero_bits;
+        (*m_mac_phy_data).PDU_RX2 = zero_bits2;
         (*m_mac_phy_data).PDU_RX = zero_bits;
-
-        
+    
     }
 
 
@@ -120,7 +118,6 @@ namespace ns3 {
     void NanoNetDevice::createMacPhyData(int tissue_ID, int nanobot_ID){
 
         vector<int> random_bits(TESTPACKETSIZE, 0);
-        vector<double> random_samples(TESTPACKETSIZE, 0);
 
         //generate a random bit data frame 
         for (int i = 0; i < TESTPACKETSIZE; ++i) {
@@ -137,16 +134,15 @@ namespace ns3 {
         vector<double> modulatedData(300, 0.0);
         for (int i = 0; i < 300; ++i) {
             if (encodedData[i] == 1) {
-                modulatedData[i] = 1.0; // 1 → +1
+                modulatedData[i] = 1.0;
             } else {
-                modulatedData[i] = -1.0; // 0 → -1
+                modulatedData[i] = -1.0;
             }
         }
         (*m_mac_phy_data).SEQ_TX = modulatedData; // SEQ_TX is a storage for the OOK modulated data
 
         (*m_mac_phy_data).nanobot_ID = nanobot_ID;
         (*m_mac_phy_data).tissue_ID = tissue_ID;
-
     }
 
     

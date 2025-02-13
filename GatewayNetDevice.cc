@@ -1,6 +1,6 @@
 /*
  * GatewayNetDevice.cc
- * Copyright (c) 2024 Technische Universität Berlin 
+ * Copyright (c) 2025 Technische Universität Berlin 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -14,8 +14,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- *  Created on: 2023. 12. 6.
- *      Author: Laurenz Ebner
+ *  Created on: 2024. 02. 13.
+ *      Author: Yerim Lee
  */
 
 
@@ -69,71 +69,51 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
     }
     data->PDU_RX2 = demodulatedData;
     
-
     // Hamming Decoding
     vector<int> decodedData(200, 0);
     for (int i = 0; i < 25; ++i) {
-        bitset<48> encodedBlock = data->PDU_RX2[i];
+        vector<int> block(12, 0);
+        for (int j = 0; j < 12; ++j) {
+            block[j] = data->PDU_RX2[i * 12 + j]; // extract 12bits
+        }
 
-        // divide 48 data block into 4 blocks
-        vector<int> block1 = extractBlock(demodulatedData, i * 12);
-        vector<int> block2 = extractBlock(demodulatedData, i * 12 + 12);
-        vector<int> block3 = extractBlock(demodulatedData, i * 12 + 24);
-        vector<int> block4 = extractBlock(demodulatedData, i * 12 + 36);
+        // decode each 12-bits block into 8-bits block
+        vector<int> decodedBlock = decodeBlock(block);
 
-        // decode each block into 8 bits
-        vector<int> decodedBlock1 = decodeBlock(block1);
-        vector<int> decodedBlock2 = decodeBlock(block2);
-        vector<int> decodedBlock3 = decodeBlock(block3);
-        vector<int> decodedBlock4 = decodeBlock(block4);
-
-        // integrate these 4 blocks into a 200bits frame
+        // integrate the decoded 8-bits block in a data packet
         for (int j = 0; j < 8; ++j) {
-            decodedData[i * 8 + j] = decodedBlock1[j];
-            decodedData[i * 8 + 8 + j] = decodedBlock2[j];
-            decodedData[i * 8 + 16 + j] = decodedBlock3[j];
-            decodedData[i * 8 + 24 + j] = decodedBlock4[j];
+            decodedData[i * 8 + j] = decodedBlock[j];
         }
     }
     data->PDU_RX = decodedData;
 
     m_storage.push_back((*data));
 
+    //cout << "Pathloss : " << pathl << endl;
 
+    fstream aiout;
+    aiout.open("gateway_data.csv", ios::out | ios::app);
+    for(int i : data->PDU_RX2)
+        aiout << i << ",";
+    aiout << "\n";
 
-    fstream afout;
+    /*fstream afout;
 
     afout.open("gateway_amplitudes.csv", ios::out | ios::app);
 
     for (double i : data->SEQ_RX)
-        afout << i << ",";
+            afout << i << ",";
 
-    afout << "\n";
-    
+    afout << "\n";*/
 
     /*fstream fout;
 
-    fout.open("gateway_sen.csv", ios::out | ios::app); 
-
-    fout  << data->nanobot_ID << "; "
-            << data->tissue_ID << "; ";
-
-    for (size_t i = 0; i < TESTPACKETSIZE; ++i) {
-        const bitset<32>& packet = data->PDU_TX[i];
-        for (size_t j = 0; j < 32; ++j) {
-            fout << packet[j];
-            if (j < 31) fout << ",";
-        }
-        fout << "\n";
-    }*/
-
-    fstream fout;
-
-    fout.open("gateway.csv", ios::out | ios::app);
+    fout.open("gateway_pdurx.csv", ios::out | ios::app); 
 
     fout << data->nanobot_ID << "; " << data->tissue_ID << "; ";
+    fout << "PDU_TX,";
     for (int i : data->PDU_TX) fout << i << ",";
-    fout << "; ";
+    fout << "\n";
     for (double i : data->PDU_TX2) fout << i << ",";
     fout << "; ";
     for (double i : data->SEQ_TX) fout << i << ",";
@@ -142,82 +122,81 @@ void GatewayNetDevice::Receive(MAC_PHY_DATA *data, float vesselthickness)
     fout << "; ";
     for (double i : data->PDU_RX2) fout << i << ",";
     fout << "; ";
+    fout << "PDU_RX,";
     for (double i : data->PDU_RX) fout << i << ",";
     fout << "; ";
-    fout << "\n";
+    fout << "\n";*/
 
-    fstream foutber;
+    //fstream foutber;
 
-    foutber.open("gateway_ber.csv", ios::out | ios::app);
-    double ber = CalculateBER(data);
-    foutber << ber << ",";
-    foutber << size(data->PDU_RX) << "\n";
+    //foutber.open("gateway_ber.csv", ios::out | ios::app);
+    //double ber = CalculateErrorBits(data);
+    //foutber << ber << ",";
+    //foutber << size(data->PDU_RX) << "\n";
 
-    cout << "Bit Error Rate (BER): " << ber << endl;
-    
-    //foutber << be << ",";
-    //foutber << size(data->PDU_RX) << ",";
+    //cout << "Bit Error Rate: " << ber << endl;
 
-    //fstream foutper;
+    StoreDataFrame(data);
 
-    //foutper.open("gateway_per.csv", ios::out | ios::app);
-    //double per = CalculatePER(data);
-    //foutper << per << ",";
-    //foutper << vesselthickness << "\n";
-    
-    //cout << "Packet Error Rate (PER): " << per << endl;
-    //cout << "Vessel Thickness: " << vesselthickness << endl;
-
-    /*if (be > 0)
-        pe = 1;
-
-    foutber << pe << ",";
-
-    foutber << vesselthickness << "\n";*/
-}
-
-double GatewayNetDevice::CalculateBER(MAC_PHY_DATA *data) {
-    int errorCount = 0;
-
-    for (size_t i = 0; i < data->PDU_RX.size(); ++i) {
-        if (i >= data->PDU_TX.size()) break;
-        for (size_t j = 0; j < TESTPACKETSIZE; ++j) {
-            if (data->PDU_RX[i] != data->PDU_TX[i]) {
-                errorCount++;
-            }
-        }
+    fstream foutberglob;
+    foutberglob.open("gateway_ber_global.csv", ios::out | ios::app);
+    if (allDataFrames.size() >= TESTPACKETSIZE) {
+        double total_ber = CalculateOverallBER();
+        foutberglob << total_ber << "\n";
     }
+    double global_ber = CalculateOverallBER();
+    foutberglob << global_ber << "\n";
+    cout << "Bit Error Rate: " << global_ber << endl;
 
-    double totalBits = static_cast<double>(data->PDU_TX.size() * 200);
-
-    if (totalBits > 0) {
-        return static_cast<double>(errorCount) / totalBits; // BER = erroneous bits / total bits in a whole test simulation
-    } else {
-        return 0.0;
-    }
-}
-
-double GatewayNetDevice::CalculatePER(MAC_PHY_DATA *data) {
-    int errorCount = 0;
-
-    for (int i = 0; i < TESTPACKETSIZE; i++) {
-        if (data->PDU_RX[i] != data->PDU_TX[i]) {
-            errorCount++;
-        }
-    }
-
-    double per = static_cast<double>(errorCount) / TESTPACKETSIZE;
-    return per;
 }
 
 int GatewayNetDevice::CalculateErrorBits(MAC_PHY_DATA *data) {
     int retval = 0;
 
-    for(int i = 0; i < TESTPACKETSIZE; i++) {
-        if(data->PDU_RX[i] != data->PDU_TX[i])
-        retval++;
+    for (size_t i = 0; i < data->PDU_RX.size(); ++i) {
+        if (i >= data->PDU_TX.size()) break;
+
+        for (int j = 0; j < TESTPACKETSIZE; ++j) {
+            if (data->PDU_RX[i] != data->PDU_TX[i]) {
+                if (((data->PDU_RX[i] >> j) & 1) != ((data->PDU_TX[i] >> j) & 1)) {
+                    retval++;
+                }
+            }
+        }
     }
     return retval;
+}
+
+void GatewayNetDevice::StoreDataFrame(MAC_PHY_DATA *data) {
+    allDataFrames.push_back(*data); 
+}
+
+double GatewayNetDevice::CalculateOverallBER() {
+    int totalErrors = 0;
+    int totalBits = 0;
+
+    for (MAC_PHY_DATA &data : allDataFrames) { 
+        totalErrors += CalculateErrorBits(&data); 
+        totalBits += data.PDU_TX.size() * TESTPACKETSIZE; 
+    }
+
+    if (totalBits > 0) {
+        return static_cast<double>(totalErrors) / totalBits;
+    } else {
+        return 0.0;
+    }
+}
+
+double GatewayNetDevice::CalculateBER(MAC_PHY_DATA *data) {
+    int errorBits = CalculateErrorBits(data);
+
+    double totalBits = static_cast<double>(data->PDU_TX.size() * TESTPACKETSIZE);
+
+    if (totalBits > 0) {
+        return static_cast<double>(errorBits) / totalBits;
+    } else {
+        return 0.0;
+    }
 }
 
 Address GatewayNetDevice::GetAddress() const
@@ -320,17 +299,6 @@ Ptr<Node> GatewayNetDevice::GetNode() const
         return errorPos; // 0 means no error, 1 means 1st bit is error, 2 means ... 12 means 12th bit is error
     }
 
-    vector<int> GatewayNetDevice::extractBlock(const vector<int>& data, int startBit) {
-        vector<int> block(12, 0);
-        for (int i = 0; i < 12; ++i) {
-            block[i] = data[startBit + i];
-        }
-        return block;
-    }
-
-    
-    
-    
 
 }
 

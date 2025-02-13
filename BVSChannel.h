@@ -1,6 +1,6 @@
 /*
  * BVSChannel.h
- * Copyright (c) 2024 Technische Universität Berlin 
+ * Copyright (c) 2025 Technische Universität Berlin 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -14,8 +14,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- *  Created on: 2023. 12. 6.
- *      Author: Laurenz Ebner
+ *  Created on: 2024. 02. 13.
+ *      Author: Yerim Lee
  */
 
 #ifndef CLASS_BVSChannel_
@@ -30,19 +30,18 @@
 #include <algorithm>
 #include <random>
 #include <map>
-#include <bitset>
 #include "terahertz.h"
 
 
-// parameter for channel model (terahertz)
+// parameter for channel model (terrahertz)
 #define TESTPACKETSIZE 200
 #define FREQ_THZ 0.5*pow(10,12)
 #define DIST_INIT 500*pow(10,-6)
 #define SKIN_THICKNESS 76*pow(10,-6)
 #define VESSEL_THICKNESS 200*pow(10,-6)
 #define TISSUETHICKNESS 1*pow(10,-3)
-#define POWER 1*pow(10,-3)
-
+#define POWER 1*pow(10,2) // A = sqrt(power)
+#define BW 1*pow(10,6) // signal bandwidth
 
 using namespace std;
 
@@ -56,22 +55,21 @@ class NanoNetDevice;
 // Define structure of data transmission package 
 struct MAC_PHY_DATA {
 
-        int nanobot_ID; // ID of nanobot
+    int nanobot_ID; // ID of nanobot
 
-        int tissue_ID; // ID of body part where to measure 
+    int tissue_ID; // ID of body part where to measure 
         
-        vector<int> PDU_TX; // Bit stream of measurement data at nanobot
+    vector<int> PDU_TX; // Bit stream of measurement data at nanobot
 
-		vector<int> PDU_TX2; // Encoded bit stream of measurement data at nanobot by FEC
+	vector<int> PDU_TX2; // Encoded bit stream of measurement data at nanobot by FEC
 
-        vector<double> SEQ_TX; // Amplitude stream of measurement data send at nanobot
+    vector<double> SEQ_TX; // Amplitude stream of measurement data send at nanobot
 
-        vector<double> SEQ_RX; // Amplitude stream of measurement data received at gateway
+    vector<double> SEQ_RX; // Amplitude stream of measurement data received at gateway
 
-		vector<int> PDU_RX2; // Demodulated bit stream of measurement data at gateway
+	vector<int> PDU_RX2; // Demodulated bit stream of measurement data at gateway
 
-        vector<int> PDU_RX; // decoded bit stream of measurement data at gateway by FEC
-        
+    vector<int> PDU_RX; // decoded bit stream of measurement data at gateway by FEC
 };
 
 /**

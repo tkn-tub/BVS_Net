@@ -1,6 +1,6 @@
 /*
  * GatewayNetDevice.h
- * Copyright (c) 2024 Technische Universität Berlin 
+ * Copyright (c) 2025 Technische Universität Berlin 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -14,8 +14,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- *  Created on: 2023. 12. 6.
- *      Author: Laurenz Ebner
+ *  Created on: 2024. 02. 13.
+ *      Author: Yerim Lee
  */
 
 
@@ -57,12 +57,13 @@ public:
 
     //calculate the ber and per
     int CalculateErrorBits(MAC_PHY_DATA *data);
-    
-    //calculate ber for FEC module
+
+     //calculate ber for FEC module
     double CalculateBER(MAC_PHY_DATA *data);
 
-    //calculate per for FEC module
-    double CalculatePER(MAC_PHY_DATA *data);
+    double CalculateOverallBER();
+    void StoreDataFrame(MAC_PHY_DATA *data);
+    vector<MAC_PHY_DATA> allDataFrames;
 
     //specify which channel the gateway is part of
 	void SetChannel(Ptr<BVSChannel> channel);
@@ -77,9 +78,6 @@ public:
 
     //detect error position
     int detectError(const vector<int>& block);
-
-    //extract 12 bits block out of 48 bits frame for a simple decoding process
-    vector<int> extractBlock(const vector<int>& data, int startBit);
 
 	// inherited from NetDevice base class, set to dummy values
     void SetIfIndex(const uint32_t index) override{}; 

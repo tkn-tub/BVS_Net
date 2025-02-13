@@ -1,6 +1,6 @@
 /*
  * NanoNetDevice.h
- * Copyright (c) 2024 Technische Universität Berlin 
+ * Copyright (c) 2025 Technische Universität Berlin 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -14,8 +14,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- *  Created on: 2023. 12. 6.
- *      Author: Laurenz Ebner
+ *  Created on: 2024. 02. 13.
+ *      Author: Yerim Lee
  */
 
 
@@ -116,6 +116,7 @@ private:
     Ptr<Node> m_node;
 
     MAC_PHY_DATA *m_mac_phy_data;
+
 };
 
 
